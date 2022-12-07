@@ -1,0 +1,409 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+Resources:
+    IAMRole:
+        Type: "AWS::IAM::Role"
+        Properties:
+            Path: "/"
+            RoleName: "eks-rds-iam-role-20221207214137932200000002"
+            AssumeRolePolicyDocument: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"EKSClusterAssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"eks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}"
+            MaxSessionDuration: 3600
+            ManagedPolicyArns: 
+              - "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+              - "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds"
+
+    IAMOIDCProvider:
+        Type: "AWS::IAM::OIDCProvider"
+        Properties:
+            Url: !Sub "oidc.eks.${AWS::Region}.amazonaws.com/id/C7F80AC761C58A9D5CC48815817F8253"
+            ClientIdList: 
+              - "sts.amazonaws.com"
+            ThumbprintList: 
+              - "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
+              - "06b25927c42a721631c1efd9431e648fa62e1e39"
+              - "917e732d330f9a12404f73d8bea36948b929dffc"
+              - "6b3eb618ca61696a2c216bb3cdac635c694a6616"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds"
+
+    EC2VPC:
+        Type: "AWS::EC2::VPC"
+        Properties:
+            CidrBlock: "172.16.0.0/16"
+            EnableDnsSupport: true
+            EnableDnsHostnames: false
+            InstanceTenancy: "default"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-vpc"
+
+    EC2Subnet:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet3.AvailabilityZone
+            CidrBlock: "172.16.1.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: true
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-eks-snet-01"
+
+    EC2Subnet2:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet6.AvailabilityZone
+            CidrBlock: "172.16.2.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: true
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-eks-snet-02"
+
+    EC2Subnet3:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            CidrBlock: "172.16.4.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: true
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-rds-snet-01"
+
+    EC2Subnet4:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !GetAtt EC2Subnet5.AvailabilityZone
+            CidrBlock: "172.16.3.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: true
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-eks-snet-03"
+
+    EC2Subnet5:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}c"
+            CidrBlock: "172.16.6.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: true
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-rds-snet-03"
+
+    EC2Subnet6:
+        Type: "AWS::EC2::Subnet"
+        Properties:
+            AvailabilityZone: !Sub "${AWS::Region}b"
+            CidrBlock: "172.16.5.0/24"
+            VpcId: !Ref EC2VPC
+            MapPublicIpOnLaunch: true
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-rds-snet-02"
+
+    EC2SecurityGroup:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "EKS cluster security group"
+            GroupName: "eks-rds-eks-cluster-cluster-20221207214139834500000005"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-eks-cluster-cluster"
+            VpcId: !Ref EC2VPC
+            SecurityGroupIngress: 
+              - 
+                SourceSecurityGroupId: !Ref EC2SecurityGroup3
+                SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+                Description: "Node groups to cluster API"
+                FromPort: 443
+                IpProtocol: "tcp"
+                ToPort: 443
+            SecurityGroupEgress: 
+              - 
+                DestinationSecurityGroupId: !Ref EC2SecurityGroup3
+                Description: "Cluster API to node kubelets"
+                FromPort: 10250
+                IpProtocol: "tcp"
+                ToPort: 10250
+              - 
+                DestinationSecurityGroupId: !Ref EC2SecurityGroup3
+                Description: "Cluster API to node groups"
+                FromPort: 443
+                IpProtocol: "tcp"
+                ToPort: 443
+
+    EC2SecurityGroup2:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "EKS created security group applied to ENI that is attached to EKS Control Plane master nodes, as well as any managed workloads."
+            GroupName: "eks-cluster-sg-eks-rds-eks-cluster-674398162"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-cluster-sg-eks-rds-eks-cluster-674398162"
+              - 
+                Key: "kubernetes.io/cluster/eks-rds-eks-cluster"
+                Value: "owned"
+            VpcId: !Ref EC2VPC
+            SecurityGroupIngress: 
+              - 
+                SourceSecurityGroupId: "sg-030b855bc2b394135"
+                SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+                IpProtocol: "-1"
+            SecurityGroupEgress: 
+              - 
+                CidrIp: "0.0.0.0/0"
+                IpProtocol: "-1"
+
+    EC2SecurityGroup3:
+        Type: "AWS::EC2::SecurityGroup"
+        Properties:
+            GroupDescription: "EKS node shared security group"
+            GroupName: "eks-rds-eks-cluster-node-20221207214139835800000006"
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "eks-rds-eks-cluster-node"
+              - 
+                Key: "kubernetes.io/cluster/eks-rds-eks-cluster"
+                Value: "owned"
+            VpcId: !Ref EC2VPC
+            SecurityGroupIngress: 
+              - 
+                SourceSecurityGroupId: "sg-0847c860996b476c3"
+                SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+                Description: "Cluster API to node kubelets"
+                FromPort: 10250
+                IpProtocol: "tcp"
+                ToPort: 10250
+              - 
+                SourceSecurityGroupId: "sg-07e6bcee057203f95"
+                SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+                Description: "Node to node CoreDNS"
+                FromPort: 53
+                IpProtocol: "udp"
+                ToPort: 53
+              - 
+                SourceSecurityGroupId: "sg-07e6bcee057203f95"
+                SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+                Description: "Node to node CoreDNS"
+                FromPort: 53
+                IpProtocol: "tcp"
+                ToPort: 53
+              - 
+                SourceSecurityGroupId: "sg-0847c860996b476c3"
+                SourceSecurityGroupOwnerId: !Ref AWS::AccountId
+                Description: "Cluster API to node groups"
+                FromPort: 443
+                IpProtocol: "tcp"
+                ToPort: 443
+            SecurityGroupEgress: 
+              - 
+                DestinationSecurityGroupId: "sg-07e6bcee057203f95"
+                Description: "Node to node CoreDNS"
+                FromPort: 53
+                IpProtocol: "tcp"
+                ToPort: 53
+              - 
+                DestinationSecurityGroupId: "sg-07e6bcee057203f95"
+                Description: "Node to node CoreDNS"
+                FromPort: 53
+                IpProtocol: "udp"
+                ToPort: 53
+              - 
+                CidrIp: "0.0.0.0/0"
+                Description: "Egress NTP/UDP to internet"
+                FromPort: 123
+                IpProtocol: "udp"
+                ToPort: 123
+              - 
+                CidrIp: "0.0.0.0/0"
+                Description: "Egress all HTTPS to internet"
+                FromPort: 443
+                IpProtocol: "tcp"
+                ToPort: 443
+              - 
+                DestinationSecurityGroupId: "sg-0847c860996b476c3"
+                Description: "Node groups to cluster API"
+                FromPort: 443
+                IpProtocol: "tcp"
+                ToPort: 443
+              - 
+                CidrIp: "0.0.0.0/0"
+                Description: "Egress NTP/TCP to internet"
+                FromPort: 123
+                IpProtocol: "tcp"
+                ToPort: 123
+
+    EC2NetworkInterface:
+        Type: "AWS::EC2::NetworkInterface"
+        Properties:
+            Description: "Amazon EKS eks-rds-eks-cluster"
+            PrivateIpAddress: "172.16.3.139"
+            PrivateIpAddresses: 
+              - 
+                PrivateIpAddress: "172.16.3.139"
+                Primary: true
+            SubnetId: !Ref EC2Subnet4
+            SourceDestCheck: true
+            GroupSet: 
+              - !Ref EC2SecurityGroup
+              - !Ref EC2SecurityGroup2
+
+    EC2NetworkInterface2:
+        Type: "AWS::EC2::NetworkInterface"
+        Properties:
+            Description: "Amazon EKS eks-rds-eks-cluster"
+            PrivateIpAddress: "172.16.2.87"
+            PrivateIpAddresses: 
+              - 
+                PrivateIpAddress: "172.16.2.87"
+                Primary: true
+            SubnetId: !Ref EC2Subnet2
+            SourceDestCheck: true
+            GroupSet: 
+              - !Ref EC2SecurityGroup
+              - !Ref EC2SecurityGroup2
+
+    RDSDBInstance:
+        Type: "AWS::RDS::DBInstance"
+        Properties:
+            DBInstanceIdentifier: "eks-rds-postgres-db"
+            AllocatedStorage: 20
+            DBInstanceClass: "db.t3.micro"
+            Engine: "postgres"
+            MasterUsername: "postgres"
+            MasterUserPassword: "REPLACEME"
+            DBName: "postgresdb"
+            PreferredBackupWindow: "10:17-10:47"
+            BackupRetentionPeriod: 0
+            AvailabilityZone: !GetAtt EC2Subnet.AvailabilityZone
+            PreferredMaintenanceWindow: "tue:08:00-tue:08:30"
+            MultiAZ: false
+            EngineVersion: "14.1"
+            AutoMinorVersionUpgrade: true
+            LicenseModel: "postgresql-license"
+            PubliclyAccessible: false
+            StorageType: "gp2"
+            Port: 5432
+            StorageEncrypted: false
+            CopyTagsToSnapshot: false
+            MonitoringInterval: 0
+            EnableIAMDatabaseAuthentication: false
+            EnablePerformanceInsights: false
+            DeletionProtection: false
+            DBSubnetGroupName: "eks-rds-db-subnet-group-20221207214150997100000007"
+            VPCSecurityGroups: 
+              - "sg-02042603b06dd3b3d"
+            DBParameterGroupName: "eks-rds-postgres-db-20221207214137923800000001"
+            OptionGroupName: "default:postgres-14"
+            CACertificateIdentifier: "rds-ca-2019"
+
+    RDSDBSubnetGroup:
+        Type: "AWS::RDS::DBSubnetGroup"
+        Properties:
+            DBSubnetGroupDescription: "eks-rds-db-subnet-group subnet group"
+            DBSubnetGroupName: "eks-rds-db-subnet-group-20221207214150997100000007"
+            SubnetIds: 
+              - !Ref EC2Subnet6
+              - !Ref EC2Subnet5
+              - !Ref EC2Subnet3
+
+    LogsLogGroup:
+        Type: "AWS::Logs::LogGroup"
+        Properties:
+            LogGroupName: "/aws/eks/eks-rds-eks-cluster/cluster"
+
+    EKSCluster:
+        Type: "AWS::EKS::Cluster"
+        Properties:
+            Name: "eks-rds-eks-cluster"
+            RoleArn: !GetAtt IAMRole.Arn
+            Version: "1.23"
+            ResourcesVpcConfig: 
+                SecurityGroupIds: 
+                  - !Ref EC2SecurityGroup
+                SubnetIds: 
+                  - !Ref EC2Subnet2
+                  - !Ref EC2Subnet
+                  - !Ref EC2Subnet4
+            KubernetesNetworkConfig: 
+                ServiceIpv4Cidr: "10.100.0.0/16"
+
+    NeptuneDBSubnetGroup:
+        Type: "AWS::Neptune::DBSubnetGroup"
+        Properties:
+            DBSubnetGroupName: "eks-rds-db-subnet-group-20221207214150997100000007"
+            DBSubnetGroupDescription: "eks-rds-db-subnet-group subnet group"
+            SubnetIds: 
+              - !Ref EC2Subnet6
+              - !Ref EC2Subnet5
+              - !Ref EC2Subnet3
+
+    DocDBDBSubnetGroup:
+        Type: "AWS::DocDB::DBSubnetGroup"
+        Properties:
+            DBSubnetGroupName: "eks-rds-db-subnet-group-20221207214150997100000007"
+            DBSubnetGroupDescription: "eks-rds-db-subnet-group subnet group"
+            SubnetIds: 
+              - !Ref EC2Subnet6
+              - !Ref EC2Subnet5
+              - !Ref EC2Subnet3
+
+    EC2NetworkInterfacePermission:
+        Type: "AWS::EC2::NetworkInterfacePermission"
+        Properties:
+            AwsAccountId: "601393103749"
+            NetworkInterfaceId: "eni-02c7c4aa7d7f5adc3"
+            Permission: "INSTANCE-ATTACH"
+
+    EC2NetworkInterfacePermission2:
+        Type: "AWS::EC2::NetworkInterfacePermission"
+        Properties:
+            AwsAccountId: "601393103749"
+            NetworkInterfaceId: "eni-098972d0c41204680"
+            Permission: "INSTANCE-ATTACH"
+
+    RDSDBSubnetGroup2:
+        Type: "AWS::RDS::DBSubnetGroup"
+        Properties:
+            DBSubnetGroupDescription: "Created from the RDS Management Console"
+            DBSubnetGroupName: "default-vpc-00605a95ac31faf8d"
+            SubnetIds: 
+              - "subnet-00dcecd1e3844d5fc"
+              - "subnet-05d2227bd4209253d"
+              - "subnet-0bec235965bb103fc"
+              - "subnet-0dafba6082ca56d6a"
+              - "subnet-0be1783066b5d1690"
+              - "subnet-00abdec11c2215dd7"
+
+    ECRRepository:
+        Type: "AWS::ECR::Repository"
+        Properties:
+            RepositoryName: "containers"
+            LifecyclePolicy: 
+                LifecyclePolicyText: "{\"rules\":[{\"rulePriority\":1,\"description\":\"keep last 50 images\",\"selection\":{\"tagStatus\":\"any\",\"countType\":\"imageCountMoreThan\",\"countNumber\":50},\"action\":{\"type\":\"expire\"}}]}"
+                RegistryId: !Ref AWS::AccountId
+            Tags: 
+              - 
+                Key: "Service"
+                Value: "containers"
+
