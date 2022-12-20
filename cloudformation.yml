@@ -16,15 +16,15 @@ Parameters:
       cased alphabet characters only such as letters with no numbers, special
       characters.
     Type: String
-    Default: sandboxenv
+    Default: humsandbox
   MasterdbUsername:
     Description: The master RDS postgres db username
     Type: String
-    Default: senv_eks_rds_pstgsql_uname
+    Default: hum_eks_rds_pstgsql_uname
   MasterdbUserPassword:
     Description: The master RDS postgres db password
     Type: String
-    Default: senv_eks_rds_pstgsql_pword
+    Default: hum_eks_rds_pstgsql_pword
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
@@ -351,7 +351,7 @@ Resources:
       VpcId: !Ref VPC
       GroupDescription: Access to the RDS Instance from EKS
       SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref EKSHostSecurityGroup
+        - CidrIp: !Ref VpcCIDR
           IpProtocol: '-1'
       Tags:
         - Key: Name
