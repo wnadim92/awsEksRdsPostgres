@@ -658,8 +658,8 @@
                 "GroupDescription": "Access to the RDS Instance from EKS",
                 "SecurityGroupIngress": [
                     {
-                        "SourceSecurityGroupId": {
-                            "Ref": "EKSHostSecurityGroup"
+                        "CidrIp": {
+                            "Ref": "VpcCIDR"
                         },
                         "IpProtocol": "-1"
                     }
