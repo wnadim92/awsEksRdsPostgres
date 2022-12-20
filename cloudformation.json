@@ -5,17 +5,17 @@
         "EnvironmentName": {
             "Description": "An environment name that will be prefixed to resource names.  Use lower cased alphabet characters only such as letters with no numbers, special characters.",
             "Type": "String",
-            "Default": "humsandbox"
+            "Default": "sandboxenv"
         },
         "MasterdbUsername": {
             "Description": "The master RDS postgres db username",
             "Type": "String",
-            "Default": "hum_eks_rds_pstgsql_uname"
+            "Default": "senv_eks_rds_pstgsql_uname"
         },        
         "MasterdbUserPassword": {
             "Description": "The master RDS postgres db password",
             "Type": "String",
-            "Default": "hum_eks_rds_pstgsql_pword"
+            "Default": "senv_eks_rds_pstgsql_pword"
         },
         "VpcCIDR": {
             "Description": "Please enter the IP range (CIDR notation) for this VPC",
